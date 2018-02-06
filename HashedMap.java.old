@@ -1,0 +1,69 @@
+import java.util.*;
+
+public class HashedMap<V> { 
+	private final int INITIAL_CAPACITY = 100;
+	private boolean reHashing = false;
+	private int size,capacity;
+	private String[] keys;
+	private V[] objs;
+
+	public HashedMap() {init_new(INITIAL_CAPACITY);}
+	private void init_new(int cap) { //Init
+		size=0;capacity=cap;
+		keys = new String[capacity];
+		objs = (V[])new Object[capacity];
+	}
+	private void checkHash() { //Determine if a Rehash is necessary
+		if ((double)size/capacity>0.75) {reHash(capacity*2);} //Increase
+		else if (capacity>INITIAL_CAPACITY&&(double)size/capacity<0.2) {reHash(capacity/2);} //Reduce
+		System.out.println((double)size/capacity);
+	}
+	private void reHash(int nCap) { //TODO NOT REHASHING PROPERLY - TOO MANY POSSIBLE ISSUES; REWRITE CLASS 4/14/17
+		reHashing=true;
+		System.out.println("Rehash "+nCap);
+		String[] oldKeys=keys;V[] oldObjs=objs;
+		init_new(nCap);
+		for (int i=0;i<oldKeys.length;i++) {if (oldKeys[i]!=null) {put(oldKeys[i],oldObjs[i]);}}
+		reHashing = false;
+	} 
+	private int hashKey(Object k) {return Math.abs(k.hashCode())%capacity;}
+	public String[] keySet() { //Returns copy of keys without Null values
+		ArrayList<String> tmp = new ArrayList<String>(Arrays.asList(keys));
+		while (tmp.remove(null));
+		return (tmp.toArray(new String[tmp.size()]));
+	}
+	public void put(String k,V v) {
+		if (!reHashing) {checkHash();} //Check if above 75%
+		for (int hash=hashKey(k);;hash=hashKey(hash+1)) { //Increments the hash value until Key is found or Null
+			if (keys[hash]==null) {//If Key(k) doesn't exist
+				keys[hash]=k;objs[hash]=v; //Add Key(k) and V(v)
+				size++;
+				break;
+			}  
+			else if (keys[hash].compareTo(k)==0) {objs[hash]=v;break;} //If Key(k) exists and is same, replace V(v)
+		}
+	}
+	public V get(String k) {
+		for (int hash=hashKey(k);;hash=hashKey(hash+1)) { //Increments the hash value until Key is found or Null
+			if (keys[hash]==null||keys[hash].compareTo(k)==0) {return objs[hash];}
+		}
+	}
+	public void remove(String k) {
+		for (int hash=hashKey(k);;hash=hashKey(hash+1)) { //Increments the hash value until Key is found or Null
+			if (keys[hash]==null||keys[hash].compareTo(k)==0) {keys[hash]=null;objs[hash]=null;break;} //Set Null
+		}
+		size--;
+		checkHash(); //Check if below 20%
+	}
+	public String toString() {
+		String s="";
+		for (int i=0;i<keys.length;i++,s+="\n") {
+			s+=String.format("[%s-%s]",keys[i],objs[i]);
+			if (i>=keys.length-1) {break;}
+		}
+		return s;
+	}
+	public void clear() {init_new(INITIAL_CAPACITY);}
+	public boolean isEmpty() {return size==0;}
+	public int size() {return size;}	
+}
